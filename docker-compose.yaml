@@ -1,0 +1,64 @@
+# -------------------------------docker-compose.yaml----------------------
+version: "3.8"
+services:
+  web:
+    build: ./frontend/vns_f
+    image: vns-frontend
+    container_name: vns-f
+    ports:
+     - "3000:3000"
+    command: yarn start
+    environment:
+      TZ: Asia/Shanghai
+  nginx-proxy:
+    image: nginx:latest
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/nginx:/etc/nginx/conf.d
+    depends_on:
+      - web
+      - backed
+  backed:
+    build: ./backend
+    image: vns-backend
+    container_name: vns-b  # 自定义后端容器名
+    ports:
+      - "8088:8088"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./datahome/uploadtmp/:/home/upload/  # 建立临时文件夹映射区
+      - ./datahome/pdfreflect/:/home/pdf         # 建立pdf映射
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/vns?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: vnsappuser
+      SPRING_DATASOURCE_PASSWORD: StrongVnsAppPwd!
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+  db:
+    image: mysql:5.7
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-home/conf:/etc/mysql/conf.d
+      - ./mysql-home/put:/home               
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: Xmgktz@Vns2022@2025
+      MYSQL_DATABASE: vns
+      MYSQL_USER: vnsappuser
+      MYSQL_PASSWORD: StrongVnsAppPwd!
+    container_name: mydb
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    container_name: redis
+    environment:
+      TZ: Asia/Shanghai
+    command: ["redis-server", "--replica-read-only", "no"]

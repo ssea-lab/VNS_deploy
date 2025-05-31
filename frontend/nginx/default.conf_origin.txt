@@ -1,0 +1,37 @@
+server {
+  listen 80;
+  server_name 1.13.165.136;
+  client_max_body_size 300M;
+  
+  location /back/ {
+    proxy_pass http://backed:8088/;
+    proxy_connect_timeout 300s;
+    proxy_read_timeout 300s;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host:80;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+  location / {
+    proxy_pass http://web:3000;
+    proxy_connect_timeout 300s;
+    proxy_read_timeout 300s;
+   # 502 bad gateway 错误解决配置 start
+    proxy_buffer_size 64k;
+    proxy_buffers 32 32k;
+    proxy_busy_buffers_size 128k;
+    # 502 bad gateway 错误解决配置 end
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+}
+
